@@ -23,7 +23,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   bool statusLogin = false;
   late User userdata;
-  final String email = 'amolina@hotmail.com';
+  final String email = 'amolina1111@hotmail.com';
   final String passw = 'passwluis';
   @override
   initState() {
