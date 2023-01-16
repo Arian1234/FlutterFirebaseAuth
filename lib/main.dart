@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +24,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   bool statusLogin = false;
   late User userdata;
-  final String email = 'amolina11111111@hotmail.com';
+  final String email = 'pepeluchito@hotmail.com';
   final String passw = 'passwluis111111';
   @override
   initState() {
@@ -39,11 +40,16 @@ class _MyAppState extends State<MyApp> {
       home: Scaffold(
         appBar: statusLogin
             ? AppBar(
+                leading: Image(
+                    image: NetworkImage(
+                        userdata.photoURL ?? 'https://picsum.photos/200')),
                 title: FittedBox(child: Text('Bienvenido ${userdata.uid}')),
                 actions: [
                   IconButton(
-                      onPressed: (() async =>
-                          await FirebaseAuth.instance.signOut()),
+                      onPressed: (() async {
+                        await FirebaseAuth.instance.signOut();
+                        await GoogleSignIn().signOut();
+                      }),
                       icon: const Icon(Icons.exit_to_app))
                 ],
               )
@@ -100,6 +106,15 @@ class _MyAppState extends State<MyApp> {
                       child: Text(
                           'No puedo verificar el correo de un usuario no logueado.'),
                     ),
+              Container(
+                width: 200,
+                color: Colors.purple,
+                child: IconButton(
+                    onPressed: () async {
+                      await signInWithGoogle();
+                    },
+                    icon: const Icon(Icons.add_box)),
+              )
             ],
           )),
         ),
@@ -158,6 +173,8 @@ class ButtonLogin extends StatelessWidget {
               } else if (e.code == 'wrong-password') {
                 log('Wrong password provided for that user.');
               }
+            } catch (e) {
+              log(e.toString());
             }
           },
           icon: const Icon(Icons.login),
@@ -239,8 +256,8 @@ class ButtonUpdate extends StatelessWidget {
               User? user = FirebaseAuth.instance.currentUser;
               if (user != null) {
                 await user.updateDisplayName("Pepe Lucho Mesa");
-                await user.updatePhotoURL(
-                    "https://www.firebaseauth.com/pepe-lucho-user/profile.jpg");
+                await user
+                    .updatePhotoURL("https://picsum.photos/id/237/200/300");
               }
             },
             icon: const Icon(Icons.update)));
@@ -331,4 +348,22 @@ class ButtonAdd extends StatelessWidget {
       log(e.toString());
     }
   }
+}
+
+Future<UserCredential> signInWithGoogle() async {
+  // Trigger the authentication flow
+  final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+  // Obtain the auth details from the request
+  final GoogleSignInAuthentication? googleAuth =
+      await googleUser?.authentication;
+
+  // Create a new credential
+  final credential = GoogleAuthProvider.credential(
+    accessToken: googleAuth?.accessToken,
+    idToken: googleAuth?.idToken,
+  );
+
+  // Once signed in, return the UserCredential
+  return await FirebaseAuth.instance.signInWithCredential(credential);
 }
